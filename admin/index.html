@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>[ALPHA] Virtual TTC Academy Dispatcher Display</title>
+    <link rel="stylesheet" href="../index.css">
+
+</head>
+<body>
+    <div class="right">
+        <a href="https://time.is/Toronto" id="time_is_link" rel="nofollow" style="font-size:36px"></a>
+        <span id="Toronto_z18a" style="font-size:36px"></span>
+        <script src="//widget.time.is/t.js"></script>
+        <script>
+            time_is_widget.init({Toronto_z18a:{}});
+        </script>
+
+        <h2>Trains Online:</h2>
+        <ul id="trains">
+            <li>No Trains are connected</li>
+        </ul>
+        <h3>Command Console:</h3>
+        <label for="command">Command:</label>
+        <input type="text" id="command">
+        <input type="button" value="Submit" onclick="sendCommand()"><br>
+        <div id="response"></div>
+        <h3>Commands:</h3>
+        <ul>
+            <li>kick &lt;Run #&gt; &lt;Reason&gt;</li>
+            <li>warn &lt;Badge #&gt; &lt;Reason&gt;</li>
+            <li>auto &lt;On/Off&gt;</li>
+            <li>reset</li>
+            <li>clear &lt;From&gt; &lt;To&gt;</li>
+            <li>signal &lt;Block&gt; &lt;rr/yg/gg/yy/rr+&gt;</li>
+            <li>new &lt;Badge #&gt; &lt;Password&gt;</li>
+        </ul>
+    </div>
+    <div class="" id="full">
+        <h1 class="full">Sheppard Dispatcher Display</h1>
+        <div class="full">
+            <div id="status">Status: Not Connected</div>
+        </div>
+        <div class="dispatch">
+            <pre>     SHY              Bayview           Bessarion           Leslie           Don Mills</pre>
+            <pre>    SE02      SW09     SW08     SW07      SW06     SW05      SW04     SW03     SW01</pre>
+            <pre id="top">     XXX      XXX       XXX      XXX      XXX       XXX      XXX      XXX       XXX</pre>
+            |<label id="SE02">_________</label><img src="../signals/rr.png" alt="" id="SSE02" class="ree" onclick="showModal('SE02')">|
+            <img src="../signals/rr.png" alt="" id="SSW09" class="ree" onclick="showModal('SW09')"><label id="SW09">_____</label>|
+            <img src="../signals/rr.png" alt="" id="SSW08" class="ree" onclick="showModal('SW08')"><label id="SW08">________</label>|
+            <img src="../signals/rr.png" alt="" id="SSW07" class="ree" onclick="showModal('SW07')"><label id="SW07">_____</label>|
+            <img src="../signals/rr.png" alt="" id="SSW06" class="ree" onclick="showModal('SW06')"><label id="SW06">________</label>|
+            <img src="../signals/rr.png" alt="" id="SSW05" class="ree" onclick="showModal('SW05')"><label id="SW05">_____</label>|
+            <img src="../signals/rr.png" alt="" id="SSW04" class="ree" onclick="showModal('SW04')"><label id="SW04">________</label>|
+            <img src="../signals/rr.png" alt="" id="SSW03" class="ree" onclick="showModal('SW03')"><label id="SW03">_____</label>|
+            <img src="../signals/rr.png" alt="" id="SSW01" class="ree" onclick="showModal('SW01')"><label id="SW01">_________</label>|<br>
+            |<label id="SE01">_________</label><img src="../signals/rr.png" alt="" id="SSE01" class="ree" onclick="showModal('SE01')">|
+            <label id="SE03">_X___</label><img src="../signals/rr.png" alt="" id="SSE03" class="ree" onclick="showModal('SE03')">|
+            <label id="SE04">________</label><img src="../signals/rr.png" alt="" id="SSE04" class="ree" onclick="showModal('SE04')">|
+            <label id="SE05">_____</label><img src="../signals/rr.png" alt="" id="SSE05" class="ree" onclick="showModal('SE05')">|
+            <label id="SE06">________</label><img src="../signals/rr.png" alt="" id="SSE06" class="ree" onclick="showModal('SE06')">|
+            <label id="SE07">_____</label><img src="../signals/rr.png" alt="" id="SSE07" class="ree" onclick="showModal('SE07')">|
+            <label id="SE08">________</label><img src="../signals/rr.png" alt="" id="SSE08" class="ree" onclick="showModal('SE08')">|
+            <label id="SE09">__X__</label><img src="../signals/rr.png" alt="" id="SSE09" class="ree" onclick="showModal('SE09')">|
+            <img src="../signals/rr.png" alt="" id="SSW02" class="ree" onclick="showModal('SW02')"><label id="SW02">_________</label>|<br>
+            <pre id="bottom">     XXX      XXX       XXX      XXX      XXX       XXX      XXX      XXX       XXX</pre>
+            <pre>    SE01      SE03     SE04     SE05      SE06     SE07      SE08     SE09     SW02</pre>
+            <pre>     SHY              Bayview           Bessarion           Leslie           Don Mills</pre>
+        </div>
+    </div>
+    <!-- The Modal -->
+    <div id="myModal" class="modal">
+
+        <!-- Modal content -->
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="close">&times;</span>
+                <h2 id="block">Block: XXXX (XXXX)</h2>
+            </div>
+            <div class="right">
+                <h3>Trains inside block:</h3>
+                <ul id="block trains">
+                    <li>No trains inside this block.</li>
+                </ul>
+            </div>
+            <div class="modal-body">
+                <p>Select a signal to clear the block</p>
+                <div id="signals"></div>
+                <img src="../signals/rr+.png" alt="Double Red Signal Advanced" id="rr+" class="inside" onclick="sendClearance('rr+')">
+                <img src="../signals/rr.png" alt="Double Red Signal" id="rr" class="selected" onclick="sendClearance('rr')">
+                <img src="../signals/yy.png" alt="Yellow / Yellow Signal" id="yy" class="inside" onclick="sendClearance('yy')">
+                <img src="../signals/yg.png" alt="Yellow / Green Signal" id="yg" class="inside" onclick="sendClearance('yg')">
+                <img src="../signals/gy.png" alt="Yellow / Yellow Signal Advanced" id="gy" class="inside" onclick="sendClearance('gy')">
+                <img src="../signals/gg.png" alt="Green / Green Signal" id="gg" class="inside" onclick="sendClearance('gg')">
+            </div>
+            <div class="modal-footer">
+                <h3>Click a signal to change the signal. Click the X or outside the box to close</h3>
+            </div>
+        </div>
+
+    </div>
+    <script>
+        // Get the modal
+        let modal = document.getElementById("myModal");
+
+        // Get the <span> element that closes the modal
+        let span = document.getElementsByClassName("close")[0];
+
+        // When the user clicks on <span> (x), close the modal
+        span.onclick = function() {
+            modal.style.display = "none";
+        }
+
+        let selected = "";
+        let lastData;
+
+        // When the user clicks anywhere outside of the modal, close it
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                modal.style.display = "none";
+                selected = "";
+            }
+        }
+
+        function updateModal() {
+            if (modal.style.display === "none" || modal.style.display === "") return;
+            let block = lastData.blocks[selected];
+            document.getElementById("block").innerHTML = "Block: " + block.section + " (" + block.station + ")";
+            let occupied = block.occupied;
+            let noTrains = true;
+            let text = "";
+            for (let i in occupied) {
+                noTrains = false;
+                let train = occupied[i];
+                text += "<li class='train'>Run #: " + train.run + "<br>" +
+                    "Badge #: " + train.driver.badge + "<br>" +
+                    "Destination: " + train.dest + "<br>" +
+                    "Block: " + train.block + "</li>";
+            }
+            if (noTrains) {
+                text = "<li>No Trains inside this block.</li>";
+            }
+            document.getElementById("block trains").innerHTML = text;
+            document.getElementById("rr+").setAttribute("class", "inside");
+            document.getElementById("rr").setAttribute("class", "inside");
+            document.getElementById("yg").setAttribute("class", "inside");
+            document.getElementById("yy").setAttribute("class", "inside");
+            document.getElementById("gy").setAttribute("class", "inside");
+            document.getElementById("gg").setAttribute("class", "inside");
+            document.getElementById(block.signal).setAttribute("class", "selected");
+        }
+
+        function sendClearance(signal) {
+            document.getElementById("signals").setAttribute("class", "sent");
+            document.getElementById("signals").innerHTML = "Sent Signal Request..."
+            let message = {};
+            message.type = "admin set";
+            message.block = selected;
+            message.signal = signal;
+            ws.send(JSON.stringify(message));
+        }
+
+        function showModal(block) {
+            selected = block;
+            modal.style.display = "block";
+            updateModal();
+            document.getElementById("signals").innerHTML = "";
+        }
+        const domain = window.location.hostname;
+        const ws = new WebSocket("ws://" + domain + ":18081");
+        let connected = false;
+        document.getElementById("status").setAttribute("class", "sent");
+        document.getElementById("status").innerHTML = "Status: Connecting......";
+
+
+        ws.addEventListener("message", ev => {
+            let content = ev.data;
+            let data = JSON.parse(content);
+            console.log(data);
+            if (data.type === "response") {
+                lastData = data.msg;
+                let noTrains = true;
+                let text = "";
+                for (let i in data.msg.trains) {
+                    noTrains = false;
+                    let train = data.msg.trains[i];
+                    text += "<li class='train'>Run #: " + train.run + "<br>" +
+                        "Badge #: " + train.driver.badge + "<br>" +
+                        "Destination: " + train.dest + "<br>" +
+                        "Block: " + train.block + "</li>";
+                }
+                if (noTrains) {
+                    text = "<li>No Trains are connected</li>";
+                }
+                document.getElementById("trains").innerHTML = text;
+
+                let occupied = {};
+                for (let i in data.msg.blocks) {
+                    let block = data.msg.blocks[i];
+                    if (block.occupied.length > 0) {
+                        document.getElementById(block.section).setAttribute("class", "occupied");
+                        if (block.occupied.length > 1) {
+                            occupied[block.section] = "!!!";
+                        } else {
+                            occupied[block.section] = block.occupied[0].run.toString();
+                        }
+                    } else {
+                        occupied[block.section] = "XXX";
+                        if (block.cleared) {
+                            document.getElementById(block.section).setAttribute("class", "cleared");
+                        } else {
+                            document.getElementById(block.section).setAttribute("class", "");
+                        }
+                    }
+                    document.getElementById("S" + block.section).setAttribute("src", "../signals/" + block.signal + ".png");
+                }
+                let top = "     " + occupied["SE02"] + "      " + occupied["SW09"] + "       " + occupied["SW08"] + "      " +
+                    occupied["SW07"] + "      " + occupied["SW06"] + "       " + occupied["SW05"] + "      " +
+                    occupied["SW04"] + "      " + occupied["SW03"] + "       " + occupied["SW01"];
+                let bottom = "     " + occupied["SE01"] + "      " + occupied["SE03"] + "       " + occupied["SE04"] + "      " +
+                    occupied["SE05"] + "      " + occupied["SE06"] + "       " + occupied["SE07"] + "      " +
+                    occupied["SE08"] + "      " + occupied["SE09"] + "       " + occupied["SW02"];
+                document.getElementById("top").innerHTML = top;
+                document.getElementById("bottom").innerHTML = bottom;
+                updateModal();
+            }else if (data.type === "command response") {
+                if (data.success) {
+                    document.getElementById("response").setAttribute("class", "success");
+                    document.getElementById("response").innerHTML = "Command ran Successfully!";
+                }else{
+                    document.getElementById("response").setAttribute("class", "failed");
+                    document.getElementById("response").innerHTML = "Command failed!";
+                }
+                setTimeout(e => {
+                    document.getElementById("response").innerHTML = "";
+                }, 5000);
+            }else if (data.type === "signal response") {
+                if (data.success) {
+                    document.getElementById("signals").setAttribute("class", "success");
+                    document.getElementById("signals").innerHTML = "Signal set!";
+                }else{
+                    document.getElementById("signals").setAttribute("class", "failed");
+                    document.getElementById("signals").innerHTML = "Failed to set Signal: " + data.msg;
+                }
+                setTimeout(e => {
+                    document.getElementById("signals").innerHTML = "";
+                }, 5000);
+            }
+        });
+
+
+
+        function ping() {
+            let message = {};
+            message.type = "admin view";
+            ws.send(JSON.stringify(message));
+        }
+
+        ws.addEventListener("error", ev => {
+            document.getElementById("status").setAttribute("class", "failed");
+            document.getElementById("status").innerHTML = "Status: ERROR, Refreshing" +
+                "<meta http-equiv='refresh' content='3' />";
+        });
+
+        ws.addEventListener("close", ev => {
+            document.getElementById("status").setAttribute("class", "failed");
+            document.getElementById("status").innerHTML = "Status: CLOSED, Refreshing" +
+                "<meta http-equiv='refresh' content='3' />";
+        });
+
+        ws.addEventListener("open", ev => {
+            document.getElementById("status").setAttribute("class", "success");
+            document.getElementById("status").innerHTML = "Status: Connected!";
+            setInterval(ping, 3000);
+        });
+
+        function sendCommand() {
+            let message = {};
+            message.type = "admin command";
+            message.command = document.getElementById("command").value;
+            ws.send(JSON.stringify(message));
+        }
+    </script>
+</body>
+</html>

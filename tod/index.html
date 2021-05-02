@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>[ALPHA] TOD Display</title>
+    <link rel="stylesheet" href="../index.css">
+    <script
+            src="https://code.jquery.com/jquery-3.4.1.min.js"
+            integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo="
+            crossorigin="anonymous">
+
+    </script>
+</head>
+<body>
+    <div class="full" id="full">
+        <img src="../signals/rr.png" id="sigR" class="right" alt="Red Signal">
+        <img src="../signals/rr.png" id="sigL" class="left" alt="Red Signal">
+        <h1>TOD Display</h1>
+        <h5 id="status" class="failed">Not Connected</h5>
+        <h5 id="run">Run #: ???</h5>
+        <h5 id="badge">Badge #: ?????</h5>
+        <h5 id="block">Block: ????</h5>
+        <h5 id="station">Station: ??????</h5>
+        <input type="button" onclick="move()" id="move" value="Depart" disabled>
+        <div id="options" class="hidden">
+        </div>
+    </div>
+    <script>
+        let termHTML = "<h3 class=\"processing\">You've reached a terminating station. Select an option:</h3>\n" +
+            "            <input type=\"button\" onclick=\"options(true)\" value=\"End Route\">\n" +
+            "            <input type=\"button\" onclick=\"options(false)\" value=\"Turn Around\">";
+        function updateSize() {
+            let sigR = document.getElementById("sigR");
+            let sigL = document.getElementById("sigL");
+            const height = $(window).height();
+            let offset = 100;
+            const h = height - offset;
+            sigR.setAttribute("height", h.toString() + "px");
+            sigL.setAttribute("height", h.toString() + "px");
+        }
+        setInterval(updateSize, 1000);
+
+        function getCookie(cname) {
+            let name = cname + "=";
+            let decodedCookie = decodeURIComponent(document.cookie);
+            let ca = decodedCookie.split(';');
+            for(let i = 0; i <ca.length; i++) {
+                let c = ca[i];
+                while (c.charAt(0) === ' ') {
+                    c = c.substring(1);
+                }
+                if (c.indexOf(name) === 0) {
+                    return c.substring(name.length, c.length);
+                }
+            }
+            return "";
+        }
+
+        function setCookie(name, value, minutes) {
+            let d = new Date();
+            d.setTime(d.getTime() + (minutes*60*1000));
+            let expires = "expires="+ d.toUTCString();
+            document.cookie = name + "=" + value + ";" + expires + ";path=/";
+        }
+
+        const domain = window.location.hostname;
+        const ws = new WebSocket("ws://" + domain + ":18081");
+        let connected = false;
+
+        document.getElementById("status").setAttribute("class", "sent");
+        document.getElementById("status").innerHTML = "Connecting to server...";
+
+        ws.addEventListener("open", ev => {
+           document.getElementById("status").setAttribute("class", "processing");
+           document.getElementById("status").innerHTML = "Connected! Logging in...";
+
+           let badge = getCookie("badge");
+           let run = getCookie("run");
+           if (badge === "" || run === "") {
+               document.getElementById("status").setAttribute("class", "failed");
+               document.getElementById("status").innerHTML = "No Valid Login Session Found (Returning to login)" +
+                   "<meta http-equiv='refresh' content='3; url=../' />";
+               ws.close();
+               return;
+           }
+           let message = {};
+           message.type = "re-log";
+           message.badge = badge;
+           message.run = run;
+           ws.send(JSON.stringify(message))
+        });
+
+        ws.addEventListener("error", ev => {
+            connected = false;
+            document.getElementById("status").setAttribute("class", "failed");
+            document.getElementById("status").innerHTML = "Connection Error.";
+            alert("Connection Error. Click OK to refresh");
+            document.getElementById("status").innerHTML = "Refreshing..." +
+                "<meta http-equiv='refresh' content='0; url=../' />";
+        });
+
+        ws.addEventListener("close", ev => {
+            connected = false;
+            let reason = ev.reason;
+            document.getElementById("status").setAttribute("class", "failed");
+            document.getElementById("status").innerHTML = "Server Closed: " + reason;
+            alert("Server Closed: " + reason);
+            document.getElementById("status").innerHTML = "Returning to Login." +
+                "<meta http-equiv='refresh' content='0; url=../' />";
+        });
+
+        ws.addEventListener("message", ev => {
+           let content = ev.data;
+           let data = JSON.parse(content);
+           if (!data.success) {
+               connected = false;
+               document.getElementById("status").setAttribute("class", "failed");
+               document.getElementById("status").innerHTML = "Failed to get Data: " + data.msg;
+               alert(data.msg);
+               document.getElementById("status").innerHTML = "Returning to Login." +
+                   "<meta http-equiv='refresh' content='0' />";
+
+           }else{
+               connected = true;
+               document.getElementById("move").removeAttribute("disabled");
+               let info = data.msg;
+               let signal = info.this.signal;
+               let section = info.this.section;
+               let station = info.this.station;
+               let nextStation = info.next.station;
+
+               document.getElementById("status").setAttribute("class", "success");
+               document.getElementById("status").innerHTML = "Connected!";
+
+               document.getElementById("badge").innerHTML = "Badge #: " + getCookie("badge");
+               document.getElementById("run").innerHTML = "Run #: " + getCookie("run");
+
+               document.getElementById("block").innerHTML = "Block: " + section;
+
+               let toDisplay;
+               if (station === "") {
+                   toDisplay = "Next Station: " + nextStation;
+                   document.getElementById("move").setAttribute("value", "Arrive at " + nextStation);
+               }else{
+                   toDisplay = "This Station: " + station;
+                   document.getElementById("move").setAttribute("value", "Depart " + station);
+               }
+               console.log(info.this, station);
+               if (info.this.dest === station) {
+                   document.getElementById("options").innerHTML = termHTML;
+                   document.getElementById("move").setAttribute("disabled", "");
+                   document.getElementById("move").setAttribute("value", "Terminating Station");
+               }else{
+                   document.getElementById("options").innerHTML = "";
+                   document.getElementById("move").removeAttribute("disabled");
+               }
+
+               document.getElementById("station").innerHTML = toDisplay;
+
+               document.getElementById("sigL").setAttribute("src", "../signals/" + signal + ".png");
+               document.getElementById("sigR").setAttribute("src", "../signals/" + signal + ".png");
+           }
+        });
+
+        function options(exit) {
+            let message = {};
+            message.run = getCookie("run");
+            if (exit) {
+                message.type = "dc";
+            }else{
+                message.type = "turn";
+                setCookie("badge", getCookie("badge"), 60);
+                setCookie("run", getCookie("run"), 60);
+            }
+            document.getElementById("options").innerHTML = "";
+            ws.send(JSON.stringify(message));
+        }
+
+        function move() {
+            if (connected) {
+                let message = {};
+                message.type = "next block";
+                message.run = getCookie("run");
+                ws.send(JSON.stringify(message));
+            }
+        }
+
+        function pulse() {
+            if (connected) {
+                let message = {};
+                message.type = "update";
+                message.run = getCookie("run");
+                ws.send(JSON.stringify(message));
+            }
+        }
+        setInterval(pulse, 5000)
+    </script>
+</body>
+</html>
