@@ -165,7 +165,8 @@
             updateModal();
             document.getElementById("signals").innerHTML = "";
         }
-        const domain = window.location.hostname;
+
+        const domain = "54.224.79.132";
         const ws = new WebSocket("ws://" + domain + ":18081");
         let connected = false;
         document.getElementById("status").setAttribute("class", "sent");
